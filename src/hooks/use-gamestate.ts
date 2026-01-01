@@ -23,9 +23,10 @@ export function useGameState(matchId: string, initialPlayers: any[]) {
                         if (prev.find(p => p.id === event.payload.id)) return prev;
                         return [...prev, event.payload];
                     });
+                } else if (event.type === "game_start") {
+                    // Redirect to active game page
+                    router.push(`/game/${matchId}`);
                 }
-
-                // Future events: game_start, etc.
             } catch (err) {
                 console.error("Failed to parse SSE message", err);
             }

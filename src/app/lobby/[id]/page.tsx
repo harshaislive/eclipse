@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { PlayerGrid } from "@/components/lobby/player-grid";
+import { LobbyActions } from "@/components/lobby/lobby-actions";
 import { Copy } from "lucide-react";
 import { redirect } from "next/navigation";
 
@@ -62,21 +63,7 @@ export default async function LobbyPage({ params }: LobbyPageProps) {
                 <PlayerGrid matchId={match.id} initialPlayers={match.players} />
 
                 {/* Actions */}
-                <div className="w-full max-w-md space-y-4">
-                    {match.players.length < 4 && (
-                        <div className="text-center p-4 border border-yellow-500/20 bg-yellow-500/5 rounded text-yellow-500 text-xs">
-                            WARNING: 4 Agents required to initialize sequence. (Refresh when full if button disabled)
-                        </div>
-                    )}
-
-                    <button
-                        disabled={match.players.length < 4}
-                        className="w-full bg-cyan text-black py-4 rounded font-bold tracking-widest disabled:opacity-20 disabled:cursor-not-allowed hover:shadow-[0_0_20px_cyan] transition-all"
-                    >
-                        START OPERATION
-                    </button>
-                </div>
-
+                <LobbyActions matchId={match.id} players={match.players} />
             </div>
         </main>
     );
