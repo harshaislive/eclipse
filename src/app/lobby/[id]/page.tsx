@@ -48,22 +48,32 @@ export default async function LobbyPage({ params }: LobbyPageProps) {
 
             <div className="flex-1 flex flex-col items-center justify-center p-6 gap-12">
 
-                {/* Room Code Display */}
-                <div className="text-center space-y-4">
-                    <p className="text-slate-500 text-xs uppercase tracking-[0.3em]">Encryption Key</p>
-                    <div className="group relative inline-flex items-center gap-4 px-12 py-6 border border-cyan/30 bg-cyan/5 rounded-lg hover:bg-cyan/10 transition-all cursor-pointer">
-                        <span className="text-6xl md:text-8xl tracking-[0.2em] font-bold text-cyan drop-shadow-[0_0_15px_rgba(0,243,255,0.4)]">
-                            {match.encryptionKey}
-                        </span>
+                {/* Room Code Display - Only for human matches */}
+                {match.gameMode === "humans" && (
+                    <div className="text-center space-y-4">
+                        <p className="text-slate-500 text-xs uppercase tracking-[0.3em]">Encryption Key</p>
+                        <div className="group relative inline-flex items-center gap-4 px-12 py-6 border border-cyan/30 bg-cyan/5 rounded-lg hover:bg-cyan/10 transition-all cursor-pointer">
+                            <span className="text-6xl md:text-8xl tracking-[0.2em] font-bold text-cyan drop-shadow-[0_0_15px_rgba(0,243,255,0.4)]">
+                                {match.encryptionKey}
+                            </span>
+                        </div>
+                        <p className="text-slate-600 text-xs">Share this key to recruit agents.</p>
                     </div>
-                    <p className="text-slate-600 text-xs">Share this key to recruit agents.</p>
-                </div>
+                )}
+
+                {/* Bot Mode Indicator */}
+                {match.gameMode === "bots" && (
+                    <div className="text-center space-y-2">
+                        <p className="text-cyan text-sm uppercase tracking-widest">Solo Training Mode</p>
+                        <p className="text-slate-500 text-xs">3 AI agents have been deployed</p>
+                    </div>
+                )}
 
                 {/* Player Grid */}
                 <PlayerGrid matchId={match.id} initialPlayers={match.players} />
 
                 {/* Actions */}
-                <LobbyActions matchId={match.id} players={match.players} />
+                <LobbyActions matchId={match.id} players={match.players} gameMode={match.gameMode} />
             </div>
         </main>
     );

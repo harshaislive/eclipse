@@ -7,9 +7,10 @@ import { useSound } from "@/hooks/use-sound";
 interface LobbyActionsProps {
     matchId: string;
     players: any[]; // Initial players
+    gameMode: "bots" | "humans";
 }
 
-export function LobbyActions({ matchId, players: initialPlayers }: LobbyActionsProps) {
+export function LobbyActions({ matchId, players: initialPlayers, gameMode }: LobbyActionsProps) {
     const { players } = useGameState(matchId, initialPlayers);
     const [loading, setLoading] = useState(false);
     const { play } = useSound();
@@ -37,17 +38,25 @@ export function LobbyActions({ matchId, players: initialPlayers }: LobbyActionsP
         }
     };
 
+    const isReady = gameMode === "bots" || players.length >= 4;
+
     return (
         <div className="w-full max-w-md space-y-4">
-            {players.length < 4 && (
+            {gameMode === "humans" && players.length < 4 && (
                 <div className="text-center p-4 border border-yellow-500/20 bg-yellow-500/5 rounded text-yellow-500 text-xs animate-pulse">
                     WARNING: 4 Agents required to initialize sequence. ({players.length}/4)
                 </div>
             )}
 
+            {gameMode === "bots" && (
+                <div className="text-center p-4 border border-cyan/20 bg-cyan/5 rounded text-cyan text-xs">
+                    ✓ Bot agents ready. Click to begin.
+                </div>
+            )}
+
             <button
                 onClick={handleStart}
-                disabled={players.length < 4 || loading}
+                disabled={!isReady || loading}
                 className="w-full bg-cyan text-black py-4 rounded font-bold tracking-widest disabled:opacity-20 disabled:cursor-not-allowed hover:shadow-[0_0_20px_cyan] transition-all"
             >
                 {loading ? "INITIALIZING..." : "START OPERATION"}
