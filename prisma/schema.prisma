@@ -35,6 +35,7 @@ model Match {
   
   players            Player[]
   chatLogs           ChatLog[]
+  taskCompletions    TaskCompletion[]
 
   @@map("matches")
 }
@@ -51,6 +52,7 @@ model Player {
 
   match         Match      @relation(fields: [matchId], references: [id], onDelete: Cascade)
   chatLogs      ChatLog[]
+  taskCompletions TaskCompletion[]
 
   @@unique([matchId, userId])
   @@map("players")
@@ -69,3 +71,23 @@ model ChatLog {
 
   @@map("chat_logs")
 }
+
+enum TaskType {
+  decrypt
+  bypass
+  wiring
+}
+
+model TaskCompletion {
+  id          String   @id @default(uuid()) @db.Uuid
+  matchId     String   @map("match_id") @db.Uuid
+  taskType    TaskType @map("task_type")
+  completedBy String   @map("completed_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player      Player   @relation(fields: [completedBy], references: [id], onDelete: Cascade)
+
+  @@map("task_completions")
+}
+
