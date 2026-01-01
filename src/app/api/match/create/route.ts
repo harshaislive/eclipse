@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis"; // Prepare for future use
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
     try {
         // Generate a random 4-digit numeric code
