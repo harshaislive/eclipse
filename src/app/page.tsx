@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 export default function Home() {
     const router = useRouter();
-    const [view, setView] = useState<"menu" | "join">("menu");
+    const [view, setView] = useState<"menu" | "join" | "modeSelect">("menu");
     const [roomCode, setRoomCode] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [userId, setUserId] = useState<string>("");
@@ -21,10 +21,14 @@ export default function Home() {
         setUserId(storedId);
     }, []);
 
-    const handleCreate = async () => {
+    const handleCreateWithMode = async (gameMode: "bots" | "humans") => {
         setIsLoading(true);
         try {
-            const res = await fetch("/api/match/create", { method: "POST" });
+            const res = await fetch("/api/match/create", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ gameMode })
+            });
             const data = await res.json();
 
             if (data.matchId) {
@@ -90,15 +94,14 @@ export default function Home() {
                 {view === "menu" ? (
                     <div className="space-y-4">
                         <button
-                            onClick={handleCreate}
+                            onClick={() => setView("modeSelect")}
                             disabled={isLoading}
                             className="w-full group relative bg-cyan/5 border border-cyan text-cyan hover:bg-cyan/10 transition-all py-4 px-4 rounded uppercase tracking-widest font-bold text-sm overflow-hidden"
                         >
                             <div className="absolute inset-0 w-0 bg-cyan/20 transition-all duration-[250ms] ease-out group-hover:w-full"></div>
                             <span className="relative flex items-center justify-center gap-2">
-                                {isLoading ? "INITIALIZING..." : "CREATE PROTOCOL"}
-                                {/* Simple arrow icon */}
-                                {!isLoading && <span className="text-xs">&gt;&gt;</span>}
+                                CREATE PROTOCOL
+                                <span className="text-xs">&gt;&gt;</span>
                             </span>
                         </button>
 
@@ -109,35 +112,69 @@ export default function Home() {
                             JOIN EXISTING CHANNEL
                         </button>
                     </div>
+                ) : view === "modeSelect" ? (
+                    <div className="space-y-4">
+                        <div className="text-center mb-4">
+                            <p className="text-cyan text-sm uppercase tracking-widest">Select Game Mode</p>
+                        </div>
+
+                        <button
+                            onClick={() => handleCreateWithMode("bots")}
+                            disabled={isLoading}
+                            className="w-full group relative bg-cyan/5 border border-cyan text-cyan hover:bg-cyan/10 transition-all py-4 px-4 rounded uppercase tracking-widest font-bold text-sm"
+                        >
+                            <span className="relative flex flex-col items-center gap-1">
+                                <span>🤖 Play with Bots</span>
+                                <span className="text-xs text-slate-400 normal-case">Instant solo game</span>
+                            </span>
+                        </button>
+
+                        <button
+                            onClick={() => handleCreateWithMode("humans")}
+                            disabled={isLoading}
+                            className="w-full group relative bg-blood/5 border border-blood text-blood hover:bg-blood/10 transition-all py-4 px-4 rounded uppercase tracking-widest font-bold text-sm"
+                        >
+                            <span className="relative flex flex-col items-center gap-1">
+                                <span>👥 Play with Humans</span>
+                                <span className="text-xs text-slate-400 normal-case">Multiplayer match</span>
+                            </span>
+                        </button>
+
+                        <button
+                            onClick={() => setView("menu")}
+                            className="w-full bg-transparent border border-slate-600 text-slate-400 hover:border-slate-400 hover:text-slate-200 transition-all py-2 px-4 rounded uppercase tracking-widest text-xs"
+                        >
+                            ← Back
+                        </button>
+                    </div>
                 ) : (
                     <div className="space-y-4">
                         <div className="space-y-1">
                             <label className="text-xs text-cyan uppercase tracking-widest">Encryption Key</label>
                             <input
                                 type="text"
-                                maxLength={4}
-                                placeholder="0000"
                                 value={roomCode}
-                                onChange={(e) => setRoomCode(e.target.value)}
-                                className="w-full bg-black/50 border border-slate-600 focus:border-cyan text-center text-2xl tracking-[0.5em] font-mono py-3 outline-none text-white placeholder:text-slate-700 transition-all"
+                                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                                maxLength={4}
+                                placeholder="XXXX"
+                                className="w-full bg-slate-900 border border-slate-700 text-slate-200 px-4 py-3 rounded focus:border-cyan focus:outline-none font-mono text-center text-2xl tracking-[0.5em]"
                             />
                         </div>
 
-                        <div className="flex gap-2 pt-2">
-                            <button
-                                onClick={() => setView("menu")}
-                                className="flex-1 bg-transparent border border-slate-600 text-slate-400 hover:text-white py-3 text-xs uppercase font-bold"
-                            >
-                                Back
-                            </button>
-                            <button
-                                onClick={() => handleJoinRequest(roomCode)}
-                                disabled={isLoading || roomCode.length < 4}
-                                className="flex-[2] bg-cyan/10 border border-cyan text-cyan hover:bg-cyan/20 disabled:opacity-50 disabled:cursor-not-allowed py-3 text-xs uppercase font-bold transition-all"
-                            >
-                                {isLoading ? "CONNECTING..." : "CONFIRM"}
-                            </button>
-                        </div>
+                        <button
+                            onClick={() => handleJoinRequest(roomCode)}
+                            disabled={isLoading || roomCode.length !== 4}
+                            className="w-full bg-cyan text-black hover:bg-cyan/80 transition-all py-3 px-4 rounded uppercase tracking-widest font-bold text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                            {isLoading ? "CONNECTING..." : "ESTABLISH LINK"}
+                        </button>
+
+                        <button
+                            onClick={() => setView("menu")}
+                            className="w-full bg-transparent border border-slate-600 text-slate-400 hover:border-slate-400 hover:text-slate-200 transition-all py-2 px-4 rounded uppercase tracking-widest text-xs"
+                        >
+                            ← Back
+                        </button>
                     </div>
                 )}
             </div>
