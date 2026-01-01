@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useGameState } from "@/hooks/use-gamestate";
 import { useSound } from "@/hooks/use-sound";
+import { useRouter } from "next/navigation";
 
 interface LobbyActionsProps {
     matchId: string;
@@ -14,6 +15,7 @@ export function LobbyActions({ matchId, players: initialPlayers, gameMode }: Lob
     const { players } = useGameState(matchId, initialPlayers);
     const [loading, setLoading] = useState(false);
     const { play } = useSound();
+    const router = useRouter();
 
     // We get userId from localstorage to send to start api (though strictly not needed if we trust any client to start)
     // API requires userId just for logging or validation if we add it later.
@@ -37,8 +39,12 @@ export function LobbyActions({ matchId, players: initialPlayers, gameMode }: Lob
             if (!res.ok) {
                 alert(data.error || "Failed to start game");
                 setLoading(false);
+            } else {
+                // Success! Redirect immediately, don't wait for SSE
+                // This fixes the "stuck in initializing" bug for the host
+                console.log("Redirecting to game...");
+                router.push(`/game/${matchId}`);
             }
-            // If success, the SSE 'game_start' event will redirect us (handled in useGameState)
         } catch (e) {
             console.error("Error starting game:", e);
             alert("Failed to start game");
