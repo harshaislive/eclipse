@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum GameStatus {
+  lobby
+  active
+  voting
+  ended
+}
+
+enum PlayerRole {
+  crew
+  ghost
+}
+
+// Models
+model Match {
+  id                 String     @id @default(uuid()) @db.Uuid
+  encryptionKey      String     @unique @map("encryption_key")
+  status             GameStatus @default(lobby)
+  extractionProgress Int        @default(0) @map("extraction_progress")
+  meetingCooldown    DateTime?  @map("meeting_cooldown") @db.Timestamptz
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  
+  players            Player[]
+  chatLogs           ChatLog[]
+
+  @@map("matches")
+}
+
+model Player {
+  id            String     @id @default(uuid()) @db.Uuid
+  userId        String?    @map("user_id") // NextAuth ID
+  matchId       String     @map("match_id") @db.Uuid
+  role          PlayerRole? // Nullable if not assigned yet
+  isAlive       Boolean    @default(true) @map("is_alive")
+  skinId        String?    @map("skin_id")
+  lastHeartbeat DateTime   @default(now()) @map("last_heartbeat") @db.Timestamptz
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz
+
+  match         Match      @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  chatLogs      ChatLog[]
+
+  @@unique([matchId, userId])
+  @@map("players")
+}
+
+model ChatLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  matchId   String   @map("match_id") @db.Uuid
+  senderId  String?  @map("sender_id") @db.Uuid
+  message   String
+  phase     String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  sender    Player?  @relation(fields: [senderId], references: [id])
+
+  @@map("chat_logs")
+}
