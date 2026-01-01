@@ -40,7 +40,7 @@ export async function POST(req: Request) {
         }
 
         // 2. Check if user already in match
-        const existingPlayer = match.players.find((p) => p.userId === userId);
+        const existingPlayer = match.players.find((p: any) => p.userId === userId);
 
         // If player exists, just return success (re-join)
         if (existingPlayer) {
