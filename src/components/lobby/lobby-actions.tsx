@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useGameState } from "@/hooks/use-gamestate";
+import { useSound } from "@/hooks/use-sound";
 
 interface LobbyActionsProps {
     matchId: string;
@@ -11,10 +12,12 @@ interface LobbyActionsProps {
 export function LobbyActions({ matchId, players: initialPlayers }: LobbyActionsProps) {
     const { players } = useGameState(matchId, initialPlayers);
     const [loading, setLoading] = useState(false);
+    const { play } = useSound();
 
     // We get userId from localstorage to send to start api (though strictly not needed if we trust any client to start)
     // API requires userId just for logging or validation if we add it later.
     const handleStart = async () => {
+        play("click");
         setLoading(true);
         const userId = localStorage.getItem("eclipse_user_id");
         try {

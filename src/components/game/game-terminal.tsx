@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSound } from "@/hooks/use-sound";
 
 interface GameTerminalProps {
     matchId: string;
@@ -10,6 +11,7 @@ interface GameTerminalProps {
 export function GameTerminal({ matchId }: GameTerminalProps) {
     const [role, setRole] = useState<"crew" | "ghost" | null>(null);
     const [loading, setLoading] = useState(true);
+    const { play } = useSound();
 
     useEffect(() => {
         const userId = localStorage.getItem("eclipse_user_id");
@@ -27,6 +29,7 @@ export function GameTerminal({ matchId }: GameTerminalProps) {
                 if (res.ok) {
                     const data = await res.json();
                     setRole(data.role || "crew"); // Default to crew if null (shouldn't happen in active)
+                    play("reveal");
                 }
             } catch (e) {
                 console.error(e);
@@ -35,7 +38,7 @@ export function GameTerminal({ matchId }: GameTerminalProps) {
             }
         }
         fetchRole();
-    }, [matchId]);
+    }, [matchId, play]);
 
     if (loading) {
         return (

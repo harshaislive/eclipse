@@ -30,7 +30,10 @@ export default function RootLayout({
                 jetbrainsMono.variable,
                 playfairDisplay.variable
             )}>
-                {children}
+                <div className="scanlines"></div>
+                <div className="relative z-10">
+                    {children}
+                </div>
             </body>
         </html>
     );
