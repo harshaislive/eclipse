@@ -55,6 +55,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Copy Prisma schema and migrations
 COPY --from=builder /app/prisma ./prisma
+# Copy generated Prisma Client from builder
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
 # Install Prisma CLI globally to avoid npx installation issues at runtime
 RUN npm install -g prisma
@@ -70,4 +73,5 @@ ENV HOSTNAME "0.0.0.0"
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
 # Using db push for MVP to avoid migration history conflicts (P3005)
-CMD prisma db push --accept-data-loss && node server.js
+# Skip generate since client is already built and copied from builder stage
+CMD prisma db push --accept-data-loss --skip-generate && node server.js
