@@ -91,12 +91,12 @@ export function DecryptGame({ onComplete, onClose }: DecryptGameProps) {
                     <p className="text-slate-400 text-sm">
                         {phase === "memorize" && "Watch the sequence..."}
                         {phase === "input" && "Repeat the sequence"}
-                        {phase === "success" && "ACCESS GRANTED"}
+                        {phase === "success" && <span className="text-green-500 font-bold tracking-widest text-lg">DECRYPTION SUCCESSFUL</span>}
                         {phase === "failure" && "INCORRECT SEQUENCE"}
                     </p>
                 </div>
 
-                <div className="grid grid-cols-4 gap-4 mb-6">
+                <div className={`grid grid-cols-4 gap-4 mb-6 transition-opacity ${phase === "success" ? "opacity-50" : "opacity-100"}`}>
                     {Array.from({ length: 16 }).map((_, i) => (
                         <button
                             key={i}

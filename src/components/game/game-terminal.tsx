@@ -116,19 +116,17 @@ export function GameTerminal({ matchId }: GameTerminalProps) {
         setActiveTask(taskType);
     };
 
-    const handleTaskComplete = async () => {
-        if (!activeTask) return;
-
+    const handleTaskComplete = async (completedTaskType: "decrypt" | "bypass" | "wiring") => {
         const userId = localStorage.getItem("eclipse_user_id");
         try {
             const res = await fetch("/api/task/complete", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ matchId, userId, taskType: activeTask }),
+                body: JSON.stringify({ matchId, userId, taskType: completedTaskType }),
             });
 
             if (res.ok) {
-                setCompletedTasks(prev => new Set(Array.from(prev).concat(activeTask)));
+                setCompletedTasks(prev => new Set(Array.from(prev).concat(completedTaskType)));
                 setActiveTask(null);
                 // Progress is updated via SSE now for consistency
             }
@@ -317,19 +315,19 @@ export function GameTerminal({ matchId }: GameTerminalProps) {
             {/* Mini-Game Overlays */}
             {activeTask === "decrypt" && (
                 <DecryptGame
-                    onComplete={handleTaskComplete}
+                    onComplete={() => handleTaskComplete("decrypt")}
                     onClose={() => setActiveTask(null)}
                 />
             )}
             {activeTask === "bypass" && (
                 <BypassGame
-                    onComplete={handleTaskComplete}
+                    onComplete={() => handleTaskComplete("bypass")}
                     onClose={() => setActiveTask(null)}
                 />
             )}
             {activeTask === "wiring" && (
                 <WiringGame
-                    onComplete={handleTaskComplete}
+                    onComplete={() => handleTaskComplete("wiring")}
                     onClose={() => setActiveTask(null)}
                 />
             )}
