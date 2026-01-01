@@ -19,7 +19,7 @@ const WIRE_COLORS = [
 
 export function WiringGame({ onComplete, onClose }: WiringGameProps) {
     const [connections, setConnections] = useState<Map<number, number>>(new Map());
-    const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
+    const [selection, setSelection] = useState<{ side: "left" | "right", index: number } | null>(null);
     const { play } = useSound();
 
     // Shuffle right side
@@ -32,39 +32,52 @@ export function WiringGame({ onComplete, onClose }: WiringGameProps) {
         return shuffled;
     });
 
-    const handleLeftClick = (index: number) => {
+    const handleSelection = (side: "left" | "right", index: number) => {
+        // If already connected, ignore
+        if (side === "left" && connections.has(index)) return;
+        if (side === "right" && Array.from(connections.values()).includes(index)) return;
+
         play("hover");
-        if (selectedLeft === index) {
-            setSelectedLeft(null);
-        } else {
-            setSelectedLeft(index);
+
+        // If nothing selected, select this
+        if (!selection) {
+            setSelection({ side, index });
+            return;
         }
-    };
 
-    const handleRightClick = (rightIndex: number) => {
-        if (selectedLeft === null) return;
+        // If clicked same item, deselect
+        if (selection.side === side && selection.index === index) {
+            setSelection(null);
+            return;
+        }
 
-        play("click");
-        const newConnections = new Map(connections);
+        // If clicked same side (different item), switch selection
+        if (selection.side === side) {
+            setSelection({ side, index });
+            return;
+        }
 
-        // Check if correct connection
-        const leftColor = WIRE_COLORS[selectedLeft];
+        // Attempt connection (Opposite sides)
+        const leftIndex = side === "left" ? index : selection.index;
+        const rightIndex = side === "right" ? index : selection.index;
+
+        const leftColor = WIRE_COLORS[leftIndex];
         const rightColor = rightOrder[rightIndex];
 
         if (leftColor.name === rightColor.name) {
-            newConnections.set(selectedLeft, rightIndex);
+            play("click");
+            const newConnections = new Map(connections);
+            newConnections.set(leftIndex, rightIndex);
             setConnections(newConnections);
-            setSelectedLeft(null);
+            setSelection(null);
 
-            // Check if all wires connected
             if (newConnections.size === WIRE_COLORS.length) {
                 play("reveal");
                 setTimeout(onComplete, 1000);
             }
         } else {
-            // Wrong connection - flash error
             play("error");
-            setSelectedLeft(null);
+            setSelection(null); // Reset on error
         }
     };
 
@@ -81,74 +94,72 @@ export function WiringGame({ onComplete, onClose }: WiringGameProps) {
                 <div className="text-center mb-8">
                     <h2 className="text-2xl font-bold text-cyan mb-2">REWIRE CONNECTIONS</h2>
                     <p className="text-slate-400 text-sm">
-                        Match wire colors: Left to Right
+                        Select a wire on one side, then match it on the other.
                     </p>
                     <p className="text-cyan text-sm mt-2">
                         {connections.size} / {WIRE_COLORS.length} connected
                     </p>
                 </div>
 
-                {/* Wiring Grid */}
                 <div className="flex justify-between items-center gap-12">
                     {/* Left Side */}
                     <div className="flex-1 space-y-3">
-                        {WIRE_COLORS.map((wire, index) => (
-                            <button
-                                key={index}
-                                onClick={() => handleLeftClick(index)}
-                                disabled={connections.has(index)}
-                                className={`
-                                    w-full py-3 px-4 rounded-lg border-2 transition-all
-                                    ${connections.has(index)
-                                        ? "border-green-500 bg-green-500/10 opacity-50 cursor-not-allowed"
-                                        : selectedLeft === index
-                                            ? `border-${wire.color} ${wire.color} text-black font-bold`
-                                            : `border-slate-600 hover:border-${wire.color} bg-slate-800/50`
-                                    }
-                                `}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <div className={`w-4 h-4 rounded-full ${wire.color}`} />
-                                    <span>{wire.name}</span>
-                                </div>
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Connection Visualization */}
-                    <div className="flex-shrink-0 text-slate-600 text-4xl">
-                        →
-                    </div>
-
-                    {/* Right Side (Shuffled) */}
-                    <div className="flex-1 space-y-3">
-                        {rightOrder.map((wire, rightIndex) => {
-                            const leftIndex = Array.from(connections.entries()).find(
-                                ([, r]) => r === rightIndex
-                            )?.[0];
-                            const isConnected = leftIndex !== undefined;
+                        {WIRE_COLORS.map((wire, index) => {
+                            const isConnected = connections.has(index);
+                            const isSelected = selection?.side === "left" && selection.index === index;
 
                             return (
                                 <button
-                                    key={rightIndex}
-                                    onClick={() => handleRightClick(rightIndex)}
+                                    key={index}
+                                    onClick={() => handleSelection("left", index)}
                                     disabled={isConnected}
                                     className={`
-                                        w-full py-3 px-4 rounded-lg border-2 transition-all
+                                        w-full py-3 px-4 rounded-lg border-2 transition-all flex items-center gap-3
                                         ${isConnected
-                                            ? "border-green-500 bg-green-500/10 cursor-not-allowed"
-                                            : selectedLeft !== null
-                                                ? `border-slate-600 hover:border-${wire.color} bg-slate-800/50 cursor-pointer`
-                                                : "border-slate-700 bg-slate-900/50 cursor-not-allowed"
+                                            ? `border-${wire.color.replace("bg-", "")} bg-slate-900/50 opacity-50`
+                                            : isSelected
+                                                ? `border-white ${wire.color} text-black font-bold scale-105 shadow-[0_0_15px_rgba(255,255,255,0.3)]`
+                                                : `border-slate-700 hover:border-slate-500 bg-slate-800/50`
                                         }
                                     `}
                                 >
-                                    <div className="flex items-center gap-2">
-                                        <div className={`w-4 h-4 rounded-full ${wire.color}`} />
-                                        <span className={isConnected ? "text-green-500" : ""}>
-                                            {isConnected ? "✓" : "?"}
-                                        </span>
-                                    </div>
+                                    <div className={`w-4 h-4 rounded-full ${wire.color} shadow-[0_0_8px_currentColor]`} />
+                                    <span>{wire.name}</span>
+                                    {isConnected && <span className="ml-auto text-green-500">✓</span>}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Center */}
+                    <div className="flex-shrink-0 text-slate-700 text-4xl font-thin tracking-tighter">
+                        {"<---->"}
+                    </div>
+
+                    {/* Right Side */}
+                    <div className="flex-1 space-y-3">
+                        {rightOrder.map((wire, index) => {
+                            const isConnected = Array.from(connections.values()).includes(index);
+                            const isSelected = selection?.side === "right" && selection.index === index;
+
+                            return (
+                                <button
+                                    key={index}
+                                    onClick={() => handleSelection("right", index)}
+                                    disabled={isConnected}
+                                    className={`
+                                        w-full py-3 px-4 rounded-lg border-2 transition-all flex items-center gap-3 justify-end
+                                        ${isConnected
+                                            ? `border-${wire.color.replace("bg-", "")} bg-slate-900/50 opacity-50`
+                                            : isSelected
+                                                ? `border-white ${wire.color} text-black font-bold scale-105 shadow-[0_0_15px_rgba(255,255,255,0.3)]`
+                                                : `border-slate-700 hover:border-slate-500 bg-slate-800/50`
+                                        }
+                                    `}
+                                >
+                                    {isConnected && <span className="mr-auto text-green-500">✓</span>}
+                                    <span>???</span>
+                                    <div className={`w-4 h-4 rounded-full ${isConnected ? wire.color : "bg-slate-600"} shadow-[0_0_8px_currentColor]`} />
                                 </button>
                             );
                         })}
