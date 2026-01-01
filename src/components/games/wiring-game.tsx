@@ -32,6 +32,16 @@ export function WiringGame({ onComplete, onClose }: WiringGameProps) {
         return shuffled;
     });
 
+    const isWon = connections.size === WIRE_COLORS.length;
+
+    const handleClose = () => {
+        if (isWon) {
+            onComplete();
+        } else {
+            onClose();
+        }
+    };
+
     const handleSelection = (side: "left" | "right", index: number) => {
         // If already connected, ignore
         if (side === "left" && connections.has(index)) return;
@@ -85,7 +95,7 @@ export function WiringGame({ onComplete, onClose }: WiringGameProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
             <div className="relative w-full max-w-3xl p-8 border border-cyan/30 bg-black/80 rounded-xl">
                 <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
                 >
                     ✕
@@ -96,12 +106,15 @@ export function WiringGame({ onComplete, onClose }: WiringGameProps) {
                     <p className="text-slate-400 text-sm">
                         Select a wire on one side, then match it on the other.
                     </p>
-                    <p className="text-cyan text-sm mt-2">
-                        {connections.size} / {WIRE_COLORS.length} connected
-                    </p>
+                    {isWon && <span className="text-green-500 font-bold tracking-widest text-lg block mt-2">SYSTEMS RESTORED</span>}
+                    {!isWon && (
+                        <p className="text-cyan text-sm mt-2">
+                            {connections.size} / {WIRE_COLORS.length} connected
+                        </p>
+                    )}
                 </div>
 
-                <div className="flex justify-between items-center gap-12">
+                <div className={`flex justify-between items-center gap-12 transition-opacity duration-500 ${isWon ? "opacity-50" : "opacity-100"}`}>
                     {/* Left Side */}
                     <div className="flex-1 space-y-3">
                         {WIRE_COLORS.map((wire, index) => {
@@ -158,8 +171,8 @@ export function WiringGame({ onComplete, onClose }: WiringGameProps) {
                                     `}
                                 >
                                     {isConnected && <span className="mr-auto text-green-500">✓</span>}
-                                    <span>???</span>
-                                    <div className={`w-4 h-4 rounded-full ${isConnected ? wire.color : "bg-slate-600"} shadow-[0_0_8px_currentColor]`} />
+                                    <span>{wire.name}</span>
+                                    <div className={`w-4 h-4 rounded-full ${isConnected || isWon ? wire.color : "bg-slate-600"} shadow-[0_0_8px_currentColor]`} />
                                 </button>
                             );
                         })}
