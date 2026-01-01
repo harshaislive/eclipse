@@ -56,6 +56,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Copy Prisma schema and migrations
 COPY --from=builder /app/prisma ./prisma
 
+# Install Prisma CLI globally to avoid npx installation issues at runtime
+RUN npm install -g prisma
+
 USER nextjs
 
 EXPOSE 3000
@@ -67,4 +70,4 @@ ENV HOSTNAME "0.0.0.0"
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
 # Using db push for MVP to avoid migration history conflicts (P3005)
-CMD npx prisma db push --accept-data-loss && node server.js
+CMD prisma db push --accept-data-loss && node server.js
