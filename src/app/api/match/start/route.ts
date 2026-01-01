@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
+import { startBotBehavior } from "@/lib/bot-service";
 
 export async function POST(req: Request) {
     try {
@@ -27,20 +28,14 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Match already started" }, { status: 400 });
         }
 
-        // 2. Validate Host (Optional, skipping for now as any player can start in this MVP)
-        // 3. Validate Player Count
-        if (match.players.length < 4) {
-            // Allow starting with < 4 for testing if needed, but PRD says 4.
-            // Let's enforce 4 for "Production" feel, or maybe 2 for testing?
-            // User asked to act like a good game dev. Let's enforce 4 but maybe add a debug override.
-            // For now, let's enforce 4.
+        // 2. Validate Player Count
+        // For bot matches, allow any count (bots auto-fill)
+        // For human matches, require 4 players
+        if (match.gameMode === "humans" && match.players.length < 4) {
             return NextResponse.json({ error: "Need 4 players to start" }, { status: 400 });
-
-            // DEBUG MODE: Uncomment to allow 1 player start
-            // if (match.players.length < 1) ...
         }
 
-        // 4. Role Assignment
+        // 3. Role Assignment
         const players = [...match.players];
         // Fisher-Yates Shuffle
         for (let i = players.length - 1; i > 0; i--) {
@@ -57,7 +52,7 @@ export async function POST(req: Request) {
             });
         });
 
-        // 5. Execute Transaction
+        // 4. Execute Transaction
         await prisma.$transaction([
             ...updates,
             prisma.match.update({
@@ -65,6 +60,11 @@ export async function POST(req: Request) {
                 data: { status: "active" },
             }),
         ]);
+
+        // 5. Start bot behavior if this is a bot match
+        if (match.gameMode === "bots") {
+            startBotBehavior(matchId);
+        }
 
         // 6. Notify Clients
         const event = { type: "game_start", payload: { matchId } };
