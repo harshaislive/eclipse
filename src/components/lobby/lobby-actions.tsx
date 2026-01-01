@@ -21,19 +21,27 @@ export function LobbyActions({ matchId, players: initialPlayers, gameMode }: Lob
         play("click");
         setLoading(true);
         const userId = localStorage.getItem("eclipse_user_id");
+
+        console.log("Starting game...", { matchId, userId });
+
         try {
             const res = await fetch("/api/match/start", {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ matchId, userId })
             });
+
+            const data = await res.json();
+            console.log("Game start response:", data);
+
             if (!res.ok) {
-                const data = await res.json();
-                alert(data.error);
+                alert(data.error || "Failed to start game");
                 setLoading(false);
             }
             // If success, the SSE 'game_start' event will redirect us (handled in useGameState)
         } catch (e) {
-            console.error(e);
+            console.error("Error starting game:", e);
+            alert("Failed to start game");
             setLoading(false);
         }
     };

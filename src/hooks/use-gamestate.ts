@@ -35,7 +35,7 @@ export function useGameState(matchId: string, initialPlayers: any[]) {
         return () => {
             eventSource.close();
         };
-    }, [matchId]);
+    }, [matchId, router]);
 
     return { players };
 }
