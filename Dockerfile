@@ -66,4 +66,5 @@ ENV HOSTNAME "0.0.0.0"
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
-CMD npx prisma migrate deploy && node server.js
+# Using db push for MVP to avoid migration history conflicts (P3005)
+CMD npx prisma db push --accept-data-loss && node server.js
