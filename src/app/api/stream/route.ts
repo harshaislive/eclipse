@@ -15,6 +15,8 @@ export async function GET(req: Request) {
         async start(controller) {
             const encoder = new TextEncoder();
 
+            console.log(`[SSE] Starting stream for match: ${matchId}`);
+
             // Subscribe to Redis channel specifically for this request
             // We need a NEW Redis connection for subscription because calling .subscribe() 
             // puts the client into subscriber mode where it can't execute other commands.
@@ -25,11 +27,18 @@ export async function GET(req: Request) {
 
             const subRedis = redis.duplicate();
 
+            console.log(`[SSE] Subscribing to channel: match:${matchId}`);
             await subRedis.subscribe(`match:${matchId}`);
+            console.log(`[SSE] Successfully subscribed to match:${matchId}`);
 
             subRedis.on("message", (channel, message) => {
+                console.log(`[SSE] Message received on ${channel}:`, message);
                 const data = `data: ${message}\n\n`;
                 controller.enqueue(encoder.encode(data));
+            });
+
+            subRedis.on("error", (err) => {
+                console.error(`[SSE] Redis error:`, err);
             });
 
             // Heartbeat to keep connection alive
@@ -38,7 +47,9 @@ export async function GET(req: Request) {
             }, 15000);
 
             req.signal.addEventListener("abort", () => {
+                console.log(`[SSE] Client disconnected from match: ${matchId}`);
                 clearInterval(interval);
+                subRedis.unsubscribe();
                 subRedis.quit();
             });
         },
